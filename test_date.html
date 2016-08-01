@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>测试日历</title>
+    <style type="text/css">
+                /*日历插件样式整合 开始*/
+.clearfix:after { content: ""; display: block; clear: both; }
+.ico_date { position: absolute; right: 10px; top: 10px; width: 18px; height: 20px; cursor: pointer; background: url(./ico_date.png); }
+.calender { overflow: hidden; display: none; position: absolute; background: #fff; top: 27px; right: -1px; width: 242px; border: 1px solid #e7e7e7; z-index: 999; -moz-user-select: none; -webkit-user-select: none; user-select: none; }
+.calender .calender_tit { padding: 4px; }
+.calender .year_box, .calender .month_box { float: left; height: 24px; line-height: 24px; text-align: center; font-size: 12px; color: #333; border: 1px solid #ccc; border-radius: 3px; }
+.calender .month_box { float: right; }
+.calender .date_list_tit { float: left; overflow: hidden; position: relative; padding: 0 20px 0 4px; border: 1px solid #ccc; border-top: none; border-bottom: none; height: 24px; line-height: 24px; text-align: center; }
+.calender  span { display: inline; float: none; }
+.calender .year_box  div, .calender .month_box div { float: left; cursor: pointer; display: inline-block; }
+.calender .date_list_box ul { position: relative; background: #fff; width: 100%; }
+.calender .date_list_box li { height: 20px; width: 100%; line-height: 20px; color: #ccc; }
+.calender .date_list_box li:hover, .calender  .date_list_box .li_active { background: #c81624; color: #fff; }
+.calender .year_box { margin-right: 4px; }
+.calender .date_list_box { position: absolute; top: 24px; left: -1px; width: 100%; height: 100px; overflow: hidden; border: 1px solid #ccc; }
+.calender .scroll_btn_t, .calender .scroll_btn_b { position: absolute; right: -12px; bottom: -12px; width: 10px; height: 10px; text-align: center; line-height: 10px;  opacity: 0.5; filter: alpha(opacity:50); }
+.calender .scroll_btn_b { bottom: -24px; background-position: center -10px; }
+.calender .scroll_btn_t:hover, .calender .scroll_btn_b:hover { opacity: 1; filter: alpha(opacity:100); }
+.calender .btn_false:hover, .calender .btn_false { opacity: .2; filter: alpha(opacity:20); cursor: auto; }
+.calender .btn_year_l, .calender .btn_year_r, .calender .btn_month_l, .calender .btn_month_r { width: 20px; color: #ccc; }
+.calender .btn_year_l:hover, .calender .btn_year_r:hover, .calender .btn_month_l:hover, .calender .btn_month_r:hover { background: #333; color: #fff; }
+.calender .prev { left: 0; }
+.calender .next { right: 0; }
+.date_info, .calender ol { overflow: hidden; width: 241px; }
+.calender ol li, .date_info li { float: left; width: 33px; line-height: 30px; height: 30px; text-align: center; list-style: none; background: #f4f4f4; margin-right: 1px; }
+.calender .today { background: #fe7676; color: #fff; }
+.calender .past { color: #ccc; }
+.date_info li { background: #fafafa; color: #333; cursor: pointer; }
+.date_info li:hover, .date_info .actived { background-color: #ffdede; }
+.date_info .nobg { background: #fff; }
+.date_info .same { background: #efefef ;}
+        /*日历插件样式整合 结束*/
+    </style>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript">
+            var curWwwPath=window.document.location.href,
+                pathName=window.document.location.pathname,
+                pos=curWwwPath.indexOf(pathName),
+                localhostPaht=curWwwPath.substring(0,pos),
+                projectName=pathName.substring(0,pathName.substr(1).indexOf('date')),
+                path=localhostPaht+projectName;
+            // $(' <link rel="stylesheet" type="text/css">').attr('href', '/css/memberCenter.css').appendTo($('head'));
+            function creatCalender(){
+                $('.calender').html('<div class="calender_tit clearfix"><div class="year_box"><div class="btn_year_l"><</div><div class="date_list_tit"><span></span><div class="scroll_btn_t"></div><div class="scroll_btn_b"></div><div class="date_list_box"><ul></ul></div></div><div class="btn_year_r">></div></div><div class="month_box"><div class="btn_month_l"><</div><div class="date_list_tit"><span></span><div class="scroll_btn_t"></div><div class="scroll_btn_b"></div><div class="date_list_box"><ul></ul></div></div><div class="btn_month_r">></div></div></div><ol class="clearfix"><li>一</li><li>二</li><li>三</li><li>四</li><li>五</li><li class="week">六</li><li class="week">日</li></ol><ul class="date_info"></ul>');
+            };
+            function closedCalender(){
+                $('.calender').removeAttr('style');
+            }
+            $(document).ready(function () {
+               
+                creatCalender();
+                var oDiv,oUl,yearBtnL,yearBtnR,monthBtnL,monthBtnR,aTit,yUl,mUl,oDate,nowM,nowY,y,m,d,calenderVal,
+                    listTit=$('.date_list_tit'),
+                    yearBtnL=$('.btn_year_l');
+                    yearBtnR=$('.btn_year_r');
+                    monthBtnL=$('.btn_month_l');
+                    monthBtnR=$('.btn_month_r');
+                $('.ico_date').each(function(i){
+                    $(this).bind('click', function () {        
+                        oDiv=$('.calender').eq(i);
+                        oUl=$('.date_info').eq(i);
+                        aTit=oDiv.find('.date_list_tit');
+                        yUl=oDiv.find('.date_list_box').eq(0).find('ul');
+                        mUl=oDiv.find('.date_list_box').eq(1).find('ul');
+                        oDate = new Date();         
+                        nowM=0;
+                        nowY=0;
+                        for(s=1;s<13;s++){
+                            $('<li></li>').attr('data-val',s).html(s+'月').appendTo(mUl);
+                            scrollBtn();
+                        }
+                        calenderVal=$('.calender_value').eq(i);
+                        if(calenderVal.attr('value')){
+                            var arr=calenderVal.attr('value').split('-');
+                            y=parseInt(arr[0]);
+                            m=parseInt(arr[1])-1;
+                            d = parseInt(arr[2]);
+                            
+                        }
+                        else{
+                            y=oDate.getFullYear();
+                            m=oDate.getMonth();
+                            d = oDate.getDate(); 
+                        }
+                        create();
+                        oDiv.show();
+                    
+                        return false;
+                    });
+                })
+                $(document).bind('click',closedCalender);
+                function scrollBtn(){
+                    listTit.each(function(i){
+                        var oSpan=$(this).find('span'),
+                            val=oSpan.attr('data-val'),
+                            oDiv=$(this).find('.date_list_box'),
+                            ul=$(this).find('ul'),
+                            maxH=ul.height()-oDiv.height(),
+                            b=oDiv.height()/(ul.height()-oDiv.height()+30);
+                        ul.find('li').each(function(n){
+                            if($(this).attr('data-val')==val){
+                                ul.find('li').removeClass('li_active')
+                                $(this).addClass('li_active');
+                                var num=20*n;
+                                (num>maxH)&&(num=maxH);
+                                var numB=num*b
+                                $(this).parent().css('top',-num+'px');
+                            }
+                            $(this).bind('click',function(){
+                                var val=parseInt($(this).attr('data-val')),
+                                    html=$(this).html();
+                                (i==0)&&(y=val);
+                                (i==1)&&(m=val-1);
+                                listTit.removeAttr('style');
+                                oSpan.attr('data-val',val).html(html);
+                                create();
+                                return false;
+                            });
+                        })
+                    })
+                }
+                btnList();
+                function btnList(){
+                    // 下个月
+                    monthBtnR.bind('click',function (){
+                        nowM++;
+                        create();
+                        $(this).parent().find('.date_list_tit').removeAttr('style');
+                        return false;
+                    });
+                        
+                    // 上年
+                    monthBtnL.bind('click',function (){
+                        nowM--;
+                        create();
+                        $(this).parent().find('.date_list_tit').removeAttr('style');
+                        return false;
+                    });
+                     yearBtnR.bind('click',function (){
+                        nowY++;
+                        create();
+                        $(this).parent().find('.date_list_tit').removeAttr('style');
+                        return false;
+                    });
+                        
+                    // 下年
+                    yearBtnL.bind('click',function (){
+                        nowY--;
+                        create();
+                        $(this).parent().find('.date_list_tit').removeAttr('style');
+                        return false;
+                    });
+                    
+                    
+                }
+                 $(document).bind('click',function(){
+                    $('.date_list_tit').removeAttr('style');
+                });
+                
+                $('.date_list_tit').click(function(){
+                    scrollBtn();
+                    $(this).css('overflow','visible');
+                    return false
+                });
+
+                var scrollT=$('.scroll_btn_t'),
+                    scrollB=$('.scroll_btn_b');
+                scrollT.each(function(i){
+                    $(this).click(function(){
+                        scrollB.removeClass('btn_false');
+                        var ul=$('.date_list_box').eq(i).find('ul'),
+                            top=ul.position().top;
+                        top+=100;
+                        if(top==0 || top>0){
+                            top=0;
+                            $(this).addClass('btn_false');
+                        }
+                        ul.css('top',top+'px');
+                        return false;
+                    })
+                });
+                scrollB.each(function(i){
+                    $(this).click(function(){
+                        scrollT.removeClass('btn_false');
+                        var ul=$('.date_list_box').eq(i).find('ul'),
+                            top=ul.position().top,
+                            minH=ul.height()-100;
+                            top-=100;
+                        if(top==-minH || top<-minH){
+
+                            $(this).addClass('btn_false');
+                            top=-minH;
+                        }
+                        ul.css('top',top+'px');
+                        return false;
+                    })
+                });
+                function create()
+                {
+                    oUl.html('');
+                    var oDate=new Date();
+                    oDate.setFullYear(y+nowY,m+nowM,1);
+                    var year=oDate.getFullYear(),
+                        month=oDate.getMonth(),
+                        yearMax=year+10;
+                
+                    for(i=0;i<21;i++)
+                    {
+                        $('<li>').html(yearMax+'年').attr('data-val',yearMax).appendTo(yUl);
+                        yearMax--;
+                    }
+                    aTit.eq(0).find('span').html(year+'年').attr('data-val',year);
+                    aTit.eq(1).find('span').html(month+1+'月').attr('data-val',month+1);
+                    // 处理空格
+                    var oDate=new Date();
+                        oDate.setFullYear(y+nowY,m+nowM,1);
+                        week=oDate.getDay();
+                    (week==0) && (week=7);
+                    
+                    for (var i=0; i<week-1; i++)
+                    {
+                        $('<li></li>').addClass('nobg').appendTo(oUl);
+                    }
+                    // 创建日期
+                    var oDate=new Date();
+                    oDate.setFullYear(y+nowY,m+nowM,1);
+                    oDate.setMonth(oDate.getMonth()+1,0);
+
+                    var total=oDate.getDate();
+                    for (var i=1; i<=total; i++)
+                    {
+                        $('<li>'+i+'</li>').attr('data-val',i).appendTo(oUl);
+                    }
+                    
+                    oUl.find('li').bind('click',function(){
+                        if($(this).hasClass('nobg'))
+                        {
+                            return false;
+                        }
+                        var dd=$(this).attr('data-val'),
+                            mm=parseInt(aTit.eq(1).find('span').attr('data-val')),
+                            yy=parseInt(aTit.eq(0).find('span').attr('data-val'));
+                        calenderVal.removeAttr('value').attr('value',yy+'-'+mm+'-'+dd);
+                        oDiv.removeAttr('style');
+
+                    });
+                    // 处理今天日期样式
+                    var aLi=oUl.find('li');
+                    aLi.each(function (){
+                        if (parseInt($(this).attr('data-val')) == d)
+                        {
+                            $(this).addClass('today');
+
+                        }
+                    });
+                }
+            });    
+        </script>
+</head>
+<body>
+            <div class="timer">
+                <em>成交时间：</em>
+                <label>
+                    <input id="begin" type="text" class="calender_value">
+                    <div class="ico_date"></div>
+                    <div class="calender"></div>
+                </label>
+                <em>到</em>
+                <label>
+                    <input id="end" type="text" class="calender_value">
+                    <div class="ico_date">
+                    </div><div class="calender"></div>
+                </label>
+
+            </div>
+    
+</body>
+</html>
